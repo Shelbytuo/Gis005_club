@@ -1,0 +1,82 @@
+---
+title: "11.17tray knit"
+author: "Shelbytuo"
+date: "2025-11-17"
+output: html_document
+---
+
+```r
+library(here) 
+library(dplyr) 
+library(janitor) 
+library(sf) 
+library(countrycode) 
+library(ggplot2) 
+library(tmap)
+```
+
+### 2. Data insert
+
+```r
+df_gii <- read.csv("HDR25_Composite_indices_complete_time_series.csv", 
+                   fileEncoding = "latin1",
+                   na.strings = "n/a") %>%
+  select(country, iso3, gii_2010, gii_2019) %>%
+  mutate(diff2019_10 = gii_2010 - gii_2019) # poitive indicates GII lower down, be the improvement
+
+head(df_gii)
+
+worldmap <- st_read("World_Countries_(Generalized)_8414823838130214587.gpkg") %>%
+  clean_names()
+
+head(worldmap)
+
+gii_map <- worldmap %>%
+  mutate(iso = countrycode(iso, origin = "iso2c", destination = "iso3c")) %>%
+  left_join(., df_gii, by = c("iso" = "iso3")) %>%
+  # Transform coordinate system to ESRI:54030 for consistent projection
+  st_transform(., crs = "ESRI:54030")
+```
+
+### 3. GII Histogram of Changes (ggplot)
+
+
+```r
+gghist <- ggplot(df_gii, 
+               aes(x = diff2019_10)) + 
+  geom_histogram(color = "black", 
+                 fill = "lightpink", 
+                 bins = 60) +
+  labs(title = "Distribution of change in the GII (2010–2019)", 
+       x = "Variation of GII (GII_2010 - GII_2019)",
+       y = "Frequency") +
+  # Add a mean line and center the title
+  geom_vline(aes(xintercept = mean(diff2019_10, na.rm = TRUE)),
+             color = "yellow", 
+             linetype = "dashed", 
+             linewidth = 1) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) 
+
+
+gghist
+```
+
+### 4. GII Spatial Distribution Map (tmap)
+
+
+```r
+tmap_mode("view") 
+# tmap_mode("plot") 
+tm_shape(gii_map) + 
+  tm_polygons("diff2019_10",
+              style = "jenks", 
+              palette = "carto.blu_grn",
+              alpha = 0.9,
+              title = "Difference in inequality index") + 
+  tm_basemap(server = "OpenStreetMap") + 
+  tm_compass(type = "arrow", position = c("left", "bottom")) + 
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_layout(title = "Difference in Gender inequality index 2010 - 2019", 
+            title.size = 1.2, 
+            title.position = c("center", "top"))
+```
