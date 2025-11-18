@@ -4,8 +4,7 @@ author: "Shelbytuo"
 date: "2025-11-17"
 output: html_document
 ---
-
-```r
+```{r}
 library(here) 
 library(dplyr) 
 library(janitor) 
@@ -14,10 +13,8 @@ library(countrycode)
 library(ggplot2) 
 library(tmap)
 ```
-
 ### 2. Data insert
-
-```r
+```{r}
 df_gii <- read.csv("HDR25_Composite_indices_complete_time_series.csv", 
                    fileEncoding = "latin1",
                    na.strings = "n/a") %>%
@@ -40,8 +37,7 @@ gii_map <- worldmap %>%
 
 ### 3. GII Histogram of Changes (ggplot)
 
-
-```r
+```{r}
 gghist <- ggplot(df_gii, 
                aes(x = diff2019_10)) + 
   geom_histogram(color = "black", 
@@ -61,10 +57,11 @@ gghist <- ggplot(df_gii,
 gghist
 ```
 
+
+
+
 ### 4. GII Spatial Distribution Map (tmap)
-
-
-```r
+```{r}
 tmap_mode("view") 
 # tmap_mode("plot") 
 tm_shape(gii_map) + 
@@ -80,3 +77,5 @@ tm_shape(gii_map) +
             title.size = 1.2, 
             title.position = c("center", "top"))
 ```
+
+
